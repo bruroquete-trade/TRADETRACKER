@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prop Compound Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070b12;color:#c0cedf;font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#070b12}::-webkit-scrollbar-thumb{background:#1a2535;border-radius:3px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:#1a2535;border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#e8a027;cursor:pointer;border:2px solid #070b12}
+input[type=text],input[type=number],input[type=date]{background:#0c1420;border:.5px solid #1a2535;border-radius:4px;color:#c0cedf;font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 10px;outline:none;width:100%;transition:border .15s}
+input:focus{border-color:#378ADD}
+button{font-family:'JetBrains Mono',monospace;cursor:pointer;border-radius:4px;transition:all .15s}
+.btn-o{background:transparent;border:.5px solid #1a2535;color:#8898aa;padding:7px 14px;font-size:11px;font-weight:600}.btn-o:hover{border-color:#378ADD;color:#378ADD}
+.btn-g{background:#0c1a0e;border:.5px solid #22c55e40;color:#22c55e;padding:9px 18px;font-size:12px;font-weight:600;width:100%}.btn-g:hover{background:#112212}
+.btn-d{background:#1a0e08;border:.5px solid #e8502740;color:#e85027;padding:4px 10px;font-size:11px;font-weight:600}.btn-d:hover{background:#2a1208}
+.app{max-width:980px;margin:0 auto;padding:24px 20px}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:.5px solid #192433}
+.hdr h1{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.hdr p{font-size:10px;color:#3a5068;margin-top:3px;letter-spacing:.07em}
+.tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:.5px solid #192433}
+.tab{padding:9px 20px;font-size:11px;font-weight:700;color:#3a5068;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.08em;transition:color .15s}
+.tab.active{color:#e8a027;border-bottom-color:#e8a027}.tab:hover:not(.active){color:#8898aa}
+.pane{display:none}.pane.active{display:block}
+.card{background:#0c1420;border:.5px solid #192433;border-radius:6px;padding:16px}
+.sh{font-size:10px;color:#3a5068;letter-spacing:.12em;margin-bottom:12px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.st{background:#0c1420;border:.5px solid #192433;border-radius:6px;padding:13px 14px}
+.st-l{font-size:10px;color:#3a5068;letter-spacing:.07em;margin-bottom:5px}
+.st-v{font-size:20px;font-weight:800;font-family:'Syne',sans-serif;line-height:1.1}
+.st-s{font-size:10px;color:#3a5068;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:8px 11px;text-align:right;font-size:10px;color:#3a5068;font-weight:700;letter-spacing:.06em;border-bottom:.5px solid #192433}
+th:first-child{text-align:left}
+td{padding:6px 11px;text-align:right;border-bottom:.5px solid #0d1520;color:#6a8090}
+td:first-child{text-align:left;color:#4a6080}
+tr:hover td{background:#0f1a24}
+tr.wd-r td{color:#c0cedf}tr.wd-r td:first-child{color:#6a8090}
+tr.buy-r td{background:#0d1a2a!important}tr.buy-r td:first-child{color:#60a5fa}
+tr.cap-r td{background:#0c1a0e;color:#22c55e!important;font-size:10px;text-align:center;padding:5px 11px;letter-spacing:.06em}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid #0d1520}
+.irow:last-child{border-bottom:none}
+.irow .k{font-size:11px;color:#4a6080}.irow .v{font-size:12px;font-weight:600}
+.badge{display:inline-flex;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:.04em}
+.badge-g{background:#0c1a0e;color:#22c55e;border:.5px solid #22c55e30}
+.badge-a{background:#1a100a;color:#e8a027;border:.5px solid #e8a02730}
+.badge-r{background:#1a0e08;color:#e85027;border:.5px solid #e8502730}
+.badge-b{background:#0a1020;color:#60a5fa;border:.5px solid #60a5fa30}
+.ff{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:10px;color:#3a5068;letter-spacing:.07em}
+.log-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.dots{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 10px}
+.dot{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:.5px solid}
+/* purchase timeline */
+.timeline{display:flex;align-items:center;gap:0;margin:8px 0 4px;overflow-x:auto;padding-bottom:4px}
+.tl-step{display:flex;flex-direction:column;align-items:center;min-width:70px}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:.5px solid;position:relative;z-index:1}
+.tl-line{flex:1;height:2px;background:#192433;min-width:12px}
+.tl-label{font-size:9px;color:#3a5068;margin-top:5px;text-align:center;letter-spacing:.04em}
+.tl-sub{font-size:9px;color:#4a6080;text-align:center;margin-top:1px}
+#toast{position:fixed;bottom:24px;right:24px;background:#0c1420;border:.5px solid #22c55e40;color:#22c55e;font-size:12px;padding:10px 18px;border-radius:5px;display:none;z-index:999;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div>
+    <h1>PROP COMPOUND TRACKER</h1>
+    <p>2 × $25K START · COPY TRADE · ORB 09:30–09:45 · +2 ACCOUNTS EVERY 4 WEEKS · CAP 8</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn-o" onclick="exportData()">EXPORT</button>
+    <label class="btn-o" style="cursor:pointer">IMPORT<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="go('sim')">SIMULATOR</div>
+  <div class="tab" onclick="go('trk')">PROGRESS TRACKER</div>
+</div>
+
+<!-- ════ SIMULATOR ════ -->
+<div id="pane-sim" class="pane active">
+
+  <!-- Purchase timeline -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sh">PURCHASE SCHEDULE — +2 ACCOUNTS EVERY 4 WEEKS</div>
+    <div id="tl-wrap" class="timeline"></div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:#3a5068">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#378ADD;border-radius:50%;margin-right:5px;vertical-align:middle"></span>Purchase event</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#1D9E75;border-radius:50%;margin-right:5px;vertical-align:middle"></span>Cap reached</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#192433;border-radius:50%;margin-right:5px;vertical-align:middle"></span>Income phase</span>
+    </div>
+  </div>
+
+  <div class="stats" id="s-stats"></div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="sh">PARAMETERS</div>
+      <div id="sliders"></div>
+      <div style="border-top:.5px solid #192433;padding-top:11px;margin-top:2px;display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;font-size:10px;color:#3a5068;line-height:2.1">
+        <div>ACCOUNT SIZE · $25,000</div><div>RISK/TRADE · 0.5% = $125</div>
+        <div>WITHDRAW AT · $1,500</div><div>ACCT COST · $90 ea.</div>
+        <div>BUY SCHEDULE · +2 / 4 WKS</div><div>WITHDRAWAL SPLIT · 90%</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card" style="flex:1">
+        <div class="sh">STEADY STATE (8 ACCOUNTS)</div>
+        <div id="s-steady"></div>
+      </div>
+      <div class="card">
+        <div class="sh">RISK EXPOSURE / SESSION</div>
+        <div id="s-risk"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <div>
+      <div class="sh" style="margin-left:2px">CUMULATIVE INCOME</div>
+      <div style="position:relative;height:160px"><canvas id="c-cum" role="img" aria-label="Projected cumulative income">chart</canvas></div>
+    </div>
+    <div>
+      <div class="sh" style="margin-left:2px">ACCOUNT GROWTH</div>
+      <div style="position:relative;height:160px"><canvas id="c-acc" role="img" aria-label="Projected account count">chart</canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sh">WEEK-BY-WEEK PROJECTION</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">Week</th><th>Accounts</th><th>WDs fired</th>
+          <th>Gross WD</th><th>Accts bought</th><th>Cost</th><th>Net income</th><th>Cumulative</th>
+        </tr></thead>
+        <tbody id="s-tbl"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:10px;color:#3a5068;display:flex;gap:16px">
+      <span style="color:#60a5fa">■ Purchase week (highlighted blue)</span>
+      <span style="color:#22c55e">■ Cap reached (highlighted green)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TRACKER ════ -->
+<div id="pane-trk" class="pane">
+
+  <div class="stats" id="t-stats"></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sh">ACCOUNT STATUS</div>
+    <div id="t-dots" class="dots"></div>
+    <div style="display:flex;gap:16px;font-size:10px;color:#3a5068">
+      <span><span style="color:#22c55e">■</span> Active</span>
+      <span><span style="color:#378ADD">■</span> Next to buy</span>
+      <span><span style="color:#2a3a4a">■</span> Not yet</span>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <div>
+      <div class="sh" style="margin-left:2px">ACTUAL VS PROJECTED — CUMULATIVE INCOME</div>
+      <div style="position:relative;height:170px"><canvas id="c-trk" role="img" aria-label="Actual vs projected income chart">chart</canvas></div>
+    </div>
+    <div class="card">
+      <div class="sh">PERFORMANCE SUMMARY</div>
+      <div id="t-perf"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sh">LOG THIS WEEK</div>
+    <div class="log-grid">
+      <div class="ff"><label class="fl">WEEK #</label><input type="number" id="f-wk" min="1" value="1"></div>
+      <div class="ff"><label class="fl">DATE</label><input type="date" id="f-dt"></div>
+      <div class="ff"><label class="fl">TOTAL ACCOUNTS NOW</label><input type="number" id="f-ac" min="2" max="8" value="2"></div>
+      <div class="ff"><label class="fl">WEEKLY PnL — ALL ACCOUNTS COMBINED ($)</label><input type="number" id="f-pnl" placeholder="e.g. 1870" step="0.01"></div>
+      <div class="ff"><label class="fl">WITHDRAWAL TAKEN ($, 0 IF NONE)</label><input type="number" id="f-wd" value="0" step="0.01"></div>
+      <div class="ff"><label class="fl">NEW ACCOUNTS BOUGHT (THIS WEEK)</label><input type="number" id="f-na" min="0" max="8" value="0"></div>
+      <div class="ff" style="grid-column:span 2"><label class="fl">NOTES</label><input type="text" id="f-nt" placeholder="e.g. purchased 2 accounts on week 4, strong ORB week"></div>
+      <div class="ff" style="justify-content:flex-end;gap:8px;flex-direction:row;align-items:flex-end">
+        <button class="btn-g" id="form-btn" onclick="submitLog()" style="flex:1">+ LOG WEEK</button>
+        <button class="btn-o" id="cancel-btn" onclick="cancelEdit()" style="display:none;padding:9px 14px;font-size:12px">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="sh" style="margin-bottom:0">WEEKLY LOG HISTORY</div>
+      <span style="font-size:10px;color:#3a5068" id="t-count">0 weeks logged</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">Wk</th><th>Date</th><th>Accts</th>
+          <th>PnL</th><th>Withdrawal</th><th>New accts</th><th>Income kept</th><th>Cumulative</th>
+          <th style="text-align:left">Notes</th><th></th>
+        </tr></thead>
+        <tbody id="t-tbl"></tbody>
+      </table>
+    </div>
+    <div id="t-empty" style="text-align:center;padding:32px;color:#3a5068;font-size:12px">No weeks logged yet — use the form above to start tracking</div>
+  </div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ─── Constants ─────────────────────────────── */
+const ACCT=25000, RISK=0.005, THRESH=1500, COST=90, DAYS=5, MAX=8;
+const BUY_EVERY=4, BUY_QTY=2; // fixed schedule
+const WD_PCT=0.90; // prop firm pays 90% of gains
+const LS_S='pct2_settings', LS_L='pct2_logs';
+
+/* ─── Helpers ────────────────────────────────── */
+const fmt  = v => '$'+Math.round(v).toLocaleString('en-US');
+const fmtS = v => v>=1000?'$'+(v/1000).toFixed(1)+'k':'$'+Math.round(v);
+const tod  = () => new Date().toISOString().split('T')[0];
+
+/* ─── Storage ────────────────────────────────── */
+const saveSet  = v => localStorage.setItem(LS_S, JSON.stringify(v));
+const loadSet  = () => { try{return JSON.parse(localStorage.getItem(LS_S))||null}catch{return null} };
+const saveLogs = v => localStorage.setItem(LS_L, JSON.stringify(v));
+const loadLogs = () => { try{return JSON.parse(localStorage.getItem(LS_L))||[]}catch{return []} };
+
+/* ─── Toast ──────────────────────────────────── */
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.cssText='position:fixed;bottom:24px;right:24px;background:#0c1420;border:.5px solid #22c55e40;color:#22c55e;font-size:12px;padding:10px 18px;border-radius:5px;z-index:999;font-family:JetBrains Mono,monospace';setTimeout(()=>t.style.display='none',2200);}
+
+/* ─── Export / Import ────────────────────────── */
+function exportData(){
+  const b=new Blob([JSON.stringify({settings:loadSet(),logs:loadLogs(),v:2},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='prop_tracker_'+tod()+'.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.settings)saveSet(d.settings);if(d.logs)saveLogs(d.logs);init();toast('Imported');}catch{toast('Import failed');}};
+  r.readAsText(f);
+}
+
+/* ─── Simulation ─────────────────────────────── */
+function evT(wr,rr){const r=ACCT*RISK; return wr*rr*r-(1-wr)*r;}
+
+function simulate(wr,rr,tr,weeks){
+  const wkPnL = evT(wr,rr)*tr*DAYS;
+  let cohorts=[{c:2,a:0}], cumInc=0, capW=null;
+  const rows=[];
+
+  for(let w=1;w<=weeks;w++){
+    // 1. Add PnL
+    cohorts.forEach(x=>{x.a+=wkPnL;});
+
+    // 2. Process withdrawals
+    let grossWd=0, wdN=0;
+    cohorts.forEach(x=>{
+      if(x.a>=THRESH){
+        const n=Math.floor(x.a/THRESH);
+        grossWd+=n*THRESH*x.c*WD_PCT; wdN+=n*x.c;
+        x.a=x.a%THRESH;
+      }
+    });
+
+    // 3. Purchase on fixed 4-week schedule
+    let bought=0, acctCost=0;
+    const cur=cohorts.reduce((s,x)=>s+x.c,0);
+    if(w%BUY_EVERY===0 && cur<MAX){
+      bought=Math.min(BUY_QTY, MAX-cur);
+      acctCost=bought*COST;
+      cohorts.push({c:bought,a:0});
+    }
+
+    // 4. Net income this week
+    const inc=grossWd-acctCost;
+    cumInc+=inc;
+
+    const total=cohorts.reduce((s,x)=>s+x.c,0);
+    if(total>=MAX && capW===null) capW=w;
+
+    rows.push({w, accts:total, wdN, grossWd, bought, acctCost, inc, cum:cumInc, atCap:total>=MAX});
+  }
+  return{rows, capW, wkPnL};
+}
+
+/* ─── Charts ─────────────────────────────────── */
+const CH={};
+function kc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+const tck={color:'#3a5068',font:{size:10,family:'JetBrains Mono'}};
+const grd={color:'rgba(25,36,51,0.8)'};
+
+function mkLine(id,lbls,dsets,yfmt){
+  kc(id);
+  CH[id]=new Chart(document.getElementById(id),{
+    type:'line', data:{labels:lbls,datasets:dsets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:dsets.length>1,labels:{color:'#3a5068',font:{size:10,family:'JetBrains Mono'},boxWidth:10,boxHeight:2,padding:12}},
+        tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+': ':'')+fmt(c.parsed.y)}}},
+      scales:{x:{ticks:{...tck,maxTicksLimit:8,maxRotation:0},grid:grd},
+              y:{ticks:{...tck,callback:yfmt||fmtS},grid:grd}}}
+  });
+}
+
+/* ─── Slider state ────────────────────────────── */
+let S = Object.assign({wr:55,rr:15,tr:3,wk:26}, loadSet());
+
+function buildSliders(){
+  const defs=[
+    {id:'sl-tr',l:'Trades per session',  min:1, max:10,step:1, key:'tr',f:v=>v},
+    {id:'sl-wr',l:'Win rate',            min:45,max:70, step:1, key:'wr',f:v=>v+'%'},
+    {id:'sl-rr',l:'Risk : reward',       min:10,max:30, step:1, key:'rr',f:v=>'1 : '+(v/10).toFixed(1)},
+    {id:'sl-wk',l:'Weeks to simulate',   min:12,max:52, step:1, key:'wk',f:v=>v},
+  ];
+  document.getElementById('sliders').innerHTML=defs.map(d=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span style="font-size:11px;color:#6a8090;min-width:168px">${d.l}</span>
+      <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${S[d.key]}"
+        style="flex:1" oninput="onSl('${d.key}',this.value,'${d.id}-v')">
+      <span id="${d.id}-v" style="font-size:12px;font-weight:600;min-width:54px;text-align:right;color:#c0cedf">${d.f(S[d.key])}</span>
+    </div>
+  `).join('');
+}
+
+const fmap={tr:v=>v, wr:v=>v+'%', rr:v=>'1 : '+(v/10).toFixed(1), wk:v=>v};
+function onSl(key,val,vid){
+  S[key]=parseInt(val);
+  document.getElementById(vid).textContent=fmap[key](S[key]);
+  saveSet(S); renderSim();
+}
+
+/* ─── Render Simulator ────────────────────────── */
+function renderSim(){
+  const wr=S.wr/100, rr=S.rr/10, tr=S.tr, wk=S.wk;
+  const ev=evT(wr,rr), dEV=ev*tr, wEV=dEV*DAYS;
+  const w1st=Math.ceil(THRESH/wEV);
+  const{rows,capW}=simulate(wr,rr,tr,wk);
+  const last=rows[rows.length-1]||{};
+
+  /* Purchase timeline */
+  const events=[];
+  let acctCount=2;
+  for(let w=BUY_EVERY;acctCount<MAX;w+=BUY_EVERY){
+    const add=Math.min(BUY_QTY,MAX-acctCount);
+    acctCount+=add;
+    events.push({w, after:acctCount, isCap:acctCount>=MAX});
+  }
+  // Build timeline nodes: start → each purchase → income phase
+  const nodes=[{w:0,label:'START',sub:'2 accts',color:'#3a5068',bc:'#1a2535'}];
+  events.forEach(e=>{
+    nodes.push({w:e.w,label:'WK '+e.w,sub:'+2 → '+e.after+' accts',color:e.isCap?'#1D9E75':'#378ADD',bc:e.isCap?'#1D9E7530':'#378ADD30'});
+  });
+  nodes.push({w:'∞',label:'WK '+(capW||'?')+'+',sub:'income phase',color:'#1D9E75',bc:'#1D9E7520'});
+
+  document.getElementById('tl-wrap').innerHTML=nodes.map((n,i)=>`
+    ${i>0?'<div class="tl-line"></div>':''}
+    <div class="tl-step">
+      <div class="tl-dot" style="background:${n.color}20;border-color:${n.bc};color:${n.color}">${i===0?'▶':i===nodes.length-1?'✓':'+2'}</div>
+      <div class="tl-label">${n.label}</div>
+      <div class="tl-sub">${n.sub}</div>
+    </div>
+  `).join('');
+
+  /* Stats */
+  let eb='badge-r',et='BELOW TARGET';
+  if(dEV*WD_PCT>=200&&dEV*WD_PCT<=300){eb='badge-g';et='ON TARGET';}
+  else if(dEV*WD_PCT>300){eb='badge-b';et='ABOVE TARGET';}
+  else if(dEV*WD_PCT>=150){eb='badge-a';et='CLOSE';}
+
+  document.getElementById('s-stats').innerHTML=[
+    {l:'Daily EV / account', v:fmt(dEV*WD_PCT),   s:`<span class="badge ${eb}">${et}</span>`},
+    {l:'Daily EV · 8 accounts',v:fmt(dEV*MAX*WD_PCT), s:'net after 90% payout'},
+    {l:'Weeks to first WD',  v:'~'+w1st+'w',     s:'~$'+Math.round(THRESH/BUY_QTY/COST)+' per WD event'},
+    {l:wk+'-week net income',v:fmt(last.cum||0), s:(last.accts||2)+' accounts at end'},
+  ].map(s=>`<div class="st"><div class="st-l">${s.l}</div><div class="st-v" style="color:#e8a027">${s.v}</div><div class="st-s">${s.s}</div></div>`).join('');
+
+  /* Steady state */
+  const ss=dEV*MAX*WD_PCT;
+  document.getElementById('s-steady').innerHTML=[
+    ['Per day net (90% payout)', fmt(ss),           '#22c55e'],
+    ['Per week net',             fmt(ss*DAYS),      '#c0cedf'],
+    ['Per month net (~20d)',     fmt(ss*20),        '#c0cedf'],
+    ['WD batch (8 accts · 90%)', fmt(MAX*THRESH*WD_PCT),'#e8a027'],
+  ].map(r=>`<div class="irow"><span class="k">${r[0]}</span><span class="v" style="color:${r[2]}">${r[1]}</span></div>`).join('');
+
+  /* Risk */
+  const dl=tr*ACCT*RISK, pl=ACCT*0.05, pct=Math.round(dl/pl*100);
+  document.getElementById('s-risk').innerHTML=[
+    ['Risk / trade',           '$'+(ACCT*RISK),                         '#c0cedf'],
+    ['Max session loss / acct',fmt(dl),                                  '#c0cedf'],
+    ['Prop daily limit (5%)',  fmt(pl),                                  '#c0cedf'],
+    ['Limit used (all-loss)',  pct+'%',  pct<=50?'#22c55e':pct<=80?'#e8a027':'#e85027'],
+    ['Max loss all 8 accts',  fmt(dl*MAX),                               '#e85027'],
+  ].map(r=>`<div class="irow"><span class="k">${r[0]}</span><span class="v" style="color:${r[2]}">${r[1]}</span></div>`).join('');
+
+  /* Charts */
+  const lbls=rows.map(r=>'W'+r.w);
+  mkLine('c-cum',lbls,[{data:rows.map(r=>Math.round(r.cum)),borderColor:'#1D9E75',borderWidth:2,backgroundColor:'rgba(29,158,117,0.07)',fill:true,tension:0.3,pointRadius:0,pointHoverRadius:4}]);
+  mkLine('c-acc',lbls,[
+    {data:rows.map(r=>r.accts),borderColor:'#378ADD',borderWidth:2,backgroundColor:'rgba(55,138,221,0.07)',fill:true,tension:0,stepped:true,pointRadius:0,pointHoverRadius:4},
+    {data:rows.map(()=>MAX),borderColor:'#1D9E7560',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:false}
+  ],v=>Math.round(v));
+
+  /* Table */
+  let prevCap=false;
+  document.getElementById('s-tbl').innerHTML=rows.map(r=>{
+    const isCap=r.atCap&&!prevCap; if(r.atCap)prevCap=true;
+    const capDiv=isCap?`<tr class="cap-r"><td colspan="8">— CAP REACHED · 8 ACCOUNTS · FULL INCOME PHASE —</td></tr>`:'';
+    const rowCls=r.bought>0?'buy-r':r.inc>0?'wd-r':'';
+    const buyNote=r.bought>0?`<span style="font-size:9px;color:#60a5fa;margin-left:4px">▶ PURCHASE</span>`:'';
+    return capDiv+`<tr class="${rowCls}">
+      <td>W${r.w}${buyNote}</td>
+      <td style="color:${r.atCap?'#22c55e':'#60a5fa'};font-weight:600">${r.accts}</td>
+      <td style="color:${r.wdN>0?'#c0cedf':'#1a2535'}">${r.wdN||'—'}</td>
+      <td style="color:${r.grossWd>0?'#c0cedf':'#1a2535'}">${r.grossWd>0?fmt(r.grossWd):'—'}</td>
+      <td style="color:${r.bought>0?'#60a5fa':'#1a2535'}">${r.bought>0?'+'+r.bought:'—'}</td>
+      <td style="color:${r.acctCost>0?'#e85027':'#1a2535'}">${r.acctCost>0?fmt(r.acctCost):'—'}</td>
+      <td style="color:${r.inc>0?'#e8a027':r.inc<0?'#e85027':'#1a2535'};font-weight:${r.inc!==0?600:400}">${r.inc!==0?fmt(r.inc):'—'}</td>
+      <td style="color:#c0cedf;font-weight:600">${fmt(r.cum)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── Render Tracker ──────────────────────────── */
+function renderTrk(){
+  const logs=loadLogs();
+  const wr=S.wr/100,rr=S.rr/10,tr=S.tr,wk=S.wk;
+  const{rows}=simulate(wr,rr,tr,Math.max(wk,logs.length+6,20));
+
+  const nextWk=logs.length>0?Math.max(...logs.map(l=>l.week))+1:1;
+  document.getElementById('f-wk').value=nextWk;
+  document.getElementById('f-dt').value=tod();
+  if(logs.length>0) document.getElementById('f-ac').value=Math.min(logs[logs.length-1].accts,MAX);
+
+  const cumAct=logs.reduce((s,l)=>s+l.inc,0);
+  const curAccts=logs.length>0?logs[logs.length-1].accts:2;
+  const projNow=rows[Math.min(logs.length-1,rows.length-1)]?.cum||0;
+  const delta=cumAct-projNow;
+  const dc=delta>=0?'#22c55e':'#e85027';
+
+  document.getElementById('t-stats').innerHTML=[
+    {l:'Current accounts', v:curAccts+' / '+MAX, s:curAccts>=MAX?'<span class="badge badge-g">AT CAP</span>':'<span class="badge badge-a">GROWING</span>'},
+    {l:'Actual cum. income',v:fmt(cumAct),        s:'all weeks combined'},
+    {l:'vs Projection',    v:(delta>=0?'+':'')+fmt(delta), s:logs.length+' weeks logged', c:dc},
+    {l:'Weeks logged',     v:logs.length,         s:'keep it consistent'},
+  ].map(s=>`<div class="st"><div class="st-l">${s.l}</div><div class="st-v" style="color:${s.c||'#e8a027'}">${s.v}</div><div class="st-s">${s.s}</div></div>`).join('');
+
+  /* Account dots */
+  document.getElementById('t-dots').innerHTML=Array.from({length:MAX},(_,i)=>{
+    const n=i+1; let bg,bc,tc;
+    if(n<=curAccts)       {bg='#0c1a0e';bc='#22c55e40';tc='#22c55e';}
+    else if(n===curAccts+1){bg='#0a1020';bc='#378ADD40';tc='#378ADD';}
+    else                   {bg='#0c1420';bc='#1a2535';  tc='#2a3a4a';}
+    return`<div class="dot" style="background:${bg};border-color:${bc};color:${tc}">${n}</div>`;
+  }).join('')+`<span style="font-size:11px;color:#3a5068;margin-left:8px;align-self:center">accounts</span>`;
+
+  /* Chart actual vs projected */
+  const maxW=Math.max(wk,logs.length+4,16);
+  const{rows:pr}=simulate(wr,rr,tr,maxW);
+  const allL=Array.from({length:maxW},(_,i)=>'W'+(i+1));
+  const projD=pr.map(r=>Math.round(r.cum));
+  const actD=allL.map((_,i)=>{
+    if(!logs.find(l=>l.week===i+1)) return null;
+    return logs.filter(l=>l.week<=i+1).reduce((s,l)=>s+l.inc,0);
+  });
+  kc('c-trk');
+  CH['c-trk']=new Chart(document.getElementById('c-trk'),{
+    type:'line',
+    data:{labels:allL,datasets:[
+      {label:'Projected',data:projD,borderColor:'#378ADD',borderWidth:1.5,borderDash:[4,3],backgroundColor:'transparent',tension:0.3,pointRadius:0,pointHoverRadius:3},
+      {label:'Actual',   data:actD, borderColor:'#e8a027',borderWidth:2,backgroundColor:'rgba(232,160,39,0.08)',fill:true,tension:0.3,pointRadius:3,pointHoverRadius:5,spanGaps:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#3a5068',font:{size:10,family:'JetBrains Mono'},boxWidth:10,boxHeight:2,padding:12}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}},
+      scales:{x:{ticks:{...tck,maxTicksLimit:8,maxRotation:0},grid:grd},y:{ticks:{...tck,callback:fmtS},grid:grd}}}
+  });
+
+  /* Performance summary */
+  const avgA=logs.length>0?cumAct/logs.length:0;
+  const avgP=logs.length>0?projNow/logs.length:0;
+  const bestW=logs.reduce((b,l)=>l.inc>b?l.inc:b,0);
+  const totWd=logs.reduce((s,l)=>s+l.wd,0);
+  document.getElementById('t-perf').innerHTML=logs.length===0
+    ?'<div style="color:#3a5068;font-size:12px;padding:14px 0">Log your first week to see performance stats</div>'
+    :[
+      ['Avg weekly income (actual)',    fmt(avgA), '#c0cedf'],
+      ['Avg weekly income (projected)', fmt(avgP), '#378ADD'],
+      ['Best single week',              fmt(bestW),'#e8a027'],
+      ['Total gross withdrawals',       fmt(totWd),'#c0cedf'],
+      ['Ahead / behind projection',     (delta>=0?'+':'')+fmt(delta), dc],
+    ].map(r=>`<div class="irow"><span class="k">${r[0]}</span><span class="v" style="color:${r[2]}">${r[1]}</span></div>`).join('');
+
+  /* History table */
+  document.getElementById('t-count').textContent=logs.length+' week'+(logs.length!==1?'s':'')+' logged';
+  if(!logs.length){
+    document.getElementById('t-tbl').innerHTML='';
+    document.getElementById('t-empty').style.display='block';
+    return;
+  }
+  document.getElementById('t-empty').style.display='none';
+  document.getElementById('t-tbl').innerHTML=[...logs].reverse().map(l=>`
+    <tr class="${l.inc>0?'wd-r':''}">
+      <td>W${l.week}</td>
+      <td>${l.date}</td>
+      <td style="color:#60a5fa;font-weight:600">${l.accts}</td>
+      <td style="color:${l.pnl>0?'#22c55e':l.pnl<0?'#e85027':'#4a6080'};font-weight:600">${l.pnl>0?'+':''}${fmt(l.pnl)}</td>
+      <td style="color:${l.wd>0?'#c0cedf':'#1a2535'}">${l.wd>0?fmt(l.wd):'—'}</td>
+      <td style="color:${l.na>0?'#60a5fa':'#1a2535'}">${l.na>0?'+'+l.na:'—'}</td>
+      <td style="color:${l.inc>0?'#e8a027':l.inc<0?'#e85027':'#1a2535'};font-weight:600">${fmt(l.inc)}</td>
+      <td style="color:#c0cedf;font-weight:600">${fmt(logs.filter(x=>x.week<=l.week).reduce((s,x)=>s+x.inc,0))}</td>
+      <td style="text-align:left;color:#4a6080;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.notes||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-o" onclick="editLog(${l.id})" style="padding:4px 10px;font-size:11px;margin-right:4px;color:#60a5fa;border-color:#60a5fa30">EDIT</button>
+        <button class="btn-d" data-del="${l.id}" onclick="delLog(${l.id})">DEL</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/* ─── Log actions ────────────────────────────── */
+let editingId=null;
+
+function getFormVals(){
+  return{
+    week: parseInt(document.getElementById('f-wk').value)||1,
+    date: document.getElementById('f-dt').value||tod(),
+    accts:Math.min(parseInt(document.getElementById('f-ac').value)||2,MAX),
+    pnl:  parseFloat(document.getElementById('f-pnl').value)||0,
+    wd:   parseFloat(document.getElementById('f-wd').value)||0,
+    na:   parseInt(document.getElementById('f-na').value)||0,
+    notes:document.getElementById('f-nt').value.trim(),
+  };
+}
+function clearForm(){
+  ['f-pnl','f-nt'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-wd').value='0';
+  document.getElementById('f-na').value='0';
+}
+function setEditMode(on){
+  editingId=on?editingId:null;
+  const btn=document.getElementById('form-btn');
+  const cancel=document.getElementById('cancel-btn');
+  const hd=document.querySelector('#pane-trk .card:nth-of-type(3) .sh');
+  btn.textContent=on?'SAVE CHANGES':'+ LOG WEEK';
+  btn.style.background=on?'#0d1a28':null;
+  btn.style.borderColor=on?'#378ADD40':null;
+  btn.style.color=on?'#60a5fa':null;
+  cancel.style.display=on?'block':'none';
+  if(hd) hd.textContent=on?'EDITING WEEK '+editingId_week:'LOG THIS WEEK';
+}
+let editingId_week=null;
+
+function submitLog(){
+  if(editingId) updateLog(); else addLog();
+}
+function addLog(){
+  const v=getFormVals();
+  const inc=v.wd-v.na*COST;
+  const logs=loadLogs();
+  logs.push({id:Date.now(),...v,inc});
+  logs.sort((a,b)=>a.week-b.week);
+  saveLogs(logs); clearForm();
+  toast('Week '+v.week+' logged');
+  renderTrk();
+}
+function editLog(id){
+  const logs=loadLogs();
+  const l=logs.find(x=>x.id===id); if(!l)return;
+  editingId=id; editingId_week=l.week;
+  document.getElementById('f-wk').value=l.week;
+  document.getElementById('f-dt').value=l.date;
+  document.getElementById('f-ac').value=l.accts;
+  document.getElementById('f-pnl').value=l.pnl;
+  document.getElementById('f-wd').value=l.wd;
+  document.getElementById('f-na').value=l.na;
+  document.getElementById('f-nt').value=l.notes||'';
+  setEditMode(true);
+  document.getElementById('f-wk').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function updateLog(){
+  const v=getFormVals();
+  const inc=v.wd-v.na*COST;
+  const logs=loadLogs().map(l=>l.id===editingId?{...l,...v,inc}:l);
+  logs.sort((a,b)=>a.week-b.week);
+  saveLogs(logs); clearForm(); setEditMode(false);
+  toast('Week '+v.week+' updated');
+  renderTrk();
+}
+function cancelEdit(){
+  clearForm(); setEditMode(false); renderTrk();
+}
+const _delPending={};
+function delLog(id){
+  if(_delPending[id]){
+    clearTimeout(_delPending[id].t);
+    delete _delPending[id];
+    saveLogs(loadLogs().filter(l=>l.id!==id));
+    if(editingId===id){setEditMode(false);clearForm();}
+    renderTrk(); toast('Entry deleted');
+  } else {
+    const btn=document.querySelector(`[data-del="${id}"]`);
+    if(btn){btn.textContent='CONFIRM?';btn.style.background='#3a0e08';btn.style.color='#ff6b50';btn.style.borderColor='#e8502780';}
+    _delPending[id]={t:setTimeout(()=>{
+      delete _delPending[id];
+      const b=document.querySelector(`[data-del="${id}"]`);
+      if(b){b.textContent='DEL';b.style.background='';b.style.color='';b.style.borderColor='';}
+    },3000)};
+  }
+}
+
+/* ─── Tabs ───────────────────────────────────── */
+function go(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['sim','trk'][i]===name));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  if(name==='trk') renderTrk();
+}
+
+/* ─── Init ───────────────────────────────────── */
+function init(){S=Object.assign({wr:55,rr:15,tr:3,wk:26},loadSet());buildSliders();renderSim();}
+init();
+</script>
+</body>
+</html>
